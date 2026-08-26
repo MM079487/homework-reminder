@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework Poster</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <form onsubmit="sendWebhook(event)">
+        <div class="container">
+            <p>Title:</p>
+            <input id="title" type="text" placeholder="Title" required>
+
+            <p>Note (optional):</p>
+            <textarea id="note" placeholder="Write a note..."></textarea>
+
+            <p>Date:</p>
+            <input type="datetime-local" name="datetime" id="dt" required>
+
+            <button type="submit">Post</button>
+        </div>
+    </form>
+    <script src="script.js"></script>
+</body>
+
+</html>
