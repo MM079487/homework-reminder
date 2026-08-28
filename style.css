@@ -2,8 +2,10 @@
     box-sizing: border-box;
 }
 
+
 body {
     margin: 0;
+
     min-height: 100vh;
 
     display: flex;
@@ -17,6 +19,7 @@ body {
 
     font-family: Arial, sans-serif;
 }
+
 
 .container {
     width: 100%;
@@ -35,6 +38,7 @@ body {
         0 5px 15px rgba(0, 0, 0, 0.25);
 }
 
+
 h1 {
     margin-top: 0;
     margin-bottom: 30px;
@@ -42,7 +46,10 @@ h1 {
     text-align: center;
 }
 
-p {
+
+label {
+    display: block;
+
     margin-bottom: 8px;
 
     color: #e5e7eb;
@@ -50,13 +57,14 @@ p {
     font-weight: 600;
 }
 
+
 input,
 textarea {
     width: 100%;
 
     padding: 12px 14px;
 
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 
     background: #10131a;
 
@@ -70,21 +78,26 @@ textarea {
 
     outline: none;
 
-    transition: 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
 }
 
+
 textarea {
-    min-height: 100px;
+    min-height: 110px;
 
     resize: vertical;
 
     font-family: Arial, sans-serif;
 }
 
+
 input::placeholder,
 textarea::placeholder {
     color: #6b7280;
 }
+
 
 input:focus,
 textarea:focus {
@@ -94,9 +107,11 @@ textarea:focus {
         0 0 0 3px rgba(88, 101, 242, 0.15);
 }
 
+
 input[type="datetime-local"] {
     color-scheme: dark;
 }
+
 
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
@@ -106,11 +121,13 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
 }
 
+
 .button-row {
     display: flex;
 
     gap: 10px;
 }
+
 
 button {
     flex: 1;
@@ -131,8 +148,12 @@ button {
 
     cursor: pointer;
 
-    transition: 0.2s;
+    transition:
+        background 0.2s,
+        transform 0.2s,
+        box-shadow 0.2s;
 }
+
 
 button:hover {
     background: #4752c4;
@@ -143,31 +164,39 @@ button:hover {
         0 5px 15px rgba(88, 101, 242, 0.3);
 }
 
+
 button:active {
     transform: translateY(0);
 }
+
+
+button:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
 
 button.secondary {
     background: #303542;
 }
 
+
 button.secondary:hover {
     background: #3b4050;
 }
 
-button.delete {
-    background: #ed4245;
-}
-
-button.delete:hover {
-    background: #c73537;
-}
 
 .refresh-button {
     flex: 0 0 auto;
 
     padding: 8px 14px;
 }
+
 
 .section-header {
     display: flex;
@@ -179,9 +208,11 @@ button.delete:hover {
     margin-top: 35px;
 }
 
+
 .section-header h2 {
     margin: 0;
 }
+
 
 .homework-item {
     margin-top: 15px;
@@ -195,21 +226,41 @@ button.delete:hover {
     border-radius: 10px;
 }
 
+
+.homework-item.overdue {
+    border-left: 4px solid #ed4245;
+}
+
+
+.homework-item.upcoming {
+    border-left: 4px solid #5865f2;
+}
+
+
 .homework-title {
-    margin: 0 0 8px;
+    margin-bottom: 8px;
 
     font-size: 18px;
 
     font-weight: bold;
 }
 
+
 .homework-date {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 
     color: #9ca3af;
 
     font-size: 14px;
 }
+
+
+.overdue-label {
+    color: #ed4245;
+
+    font-weight: bold;
+}
+
 
 .homework-note {
     margin-bottom: 15px;
@@ -221,11 +272,13 @@ button.delete:hover {
     word-break: break-word;
 }
 
+
 .homework-actions {
     display: flex;
 
     gap: 8px;
 }
+
 
 .homework-actions button {
     flex: 1;
@@ -235,6 +288,17 @@ button.delete:hover {
     font-size: 14px;
 }
 
+
+button.delete {
+    background: #ed4245;
+}
+
+
+button.delete:hover {
+    background: #c73537;
+}
+
+
 .empty {
     margin-top: 20px;
 
@@ -243,7 +307,10 @@ button.delete:hover {
     color: #6b7280;
 }
 
+
 #status {
+    min-height: 20px;
+
     margin-top: 15px;
 
     text-align: center;

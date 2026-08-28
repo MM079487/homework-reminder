@@ -21,12 +21,15 @@
 
         <form id="homeworkForm">
 
+            <!-- Used when editing -->
             <input
                 type="hidden"
                 id="editId"
             >
 
-            <p>Title:</p>
+            <label for="title">
+                Title:
+            </label>
 
             <input
                 id="title"
@@ -36,7 +39,10 @@
                 required
             >
 
-            <p>Note (optional):</p>
+
+            <label for="note">
+                Note (optional):
+            </label>
 
             <textarea
                 id="note"
@@ -44,13 +50,17 @@
                 maxlength="1000"
             ></textarea>
 
-            <p>Date:</p>
+
+            <label for="dt">
+                Date:
+            </label>
 
             <input
                 type="datetime-local"
                 id="dt"
                 required
             >
+
 
             <div class="button-row">
 
@@ -67,14 +77,16 @@
                     class="secondary"
                     hidden
                 >
-                    Cancel Edit
+                    Cancel
                 </button>
 
             </div>
 
         </form>
 
+
         <div id="status"></div>
+
 
         <section class="homework-section">
 
@@ -92,15 +104,19 @@
 
             </div>
 
+
             <div id="homeworkList">
+
                 <p class="empty">
                     Loading...
                 </p>
+
             </div>
 
         </section>
 
     </main>
+
 
     <script src="script.js"></script>
 

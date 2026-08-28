@@ -1,10 +1,17 @@
-const form = document.getElementById("homeworkForm");
+const form =
+    document.getElementById("homeworkForm");
 
-const titleInput = document.getElementById("title");
-const noteInput = document.getElementById("note");
-const datetimeInput = document.getElementById("dt");
+const titleInput =
+    document.getElementById("title");
 
-const editIdInput = document.getElementById("editId");
+const noteInput =
+    document.getElementById("note");
+
+const datetimeInput =
+    document.getElementById("dt");
+
+const editIdInput =
+    document.getElementById("editId");
 
 const submitButton =
     document.getElementById("submitButton");
@@ -23,24 +30,47 @@ const statusElement =
 
 
 // --------------------------------------------------
-// Set minimum date/time
+// Minimum date
 // --------------------------------------------------
 
 function updateMinimumDate() {
 
     const now = new Date();
 
-    const localDateTime = new Date(
-        now.getTime() -
-        now.getTimezoneOffset() * 60000
-    )
-        .toISOString()
-        .slice(0, 16);
+    const localDateTime =
+        new Date(
+            now.getTime() -
+            now.getTimezoneOffset() * 60000
+        )
+            .toISOString()
+            .slice(0, 16);
 
-    datetimeInput.min = localDateTime;
+    datetimeInput.min =
+        localDateTime;
 }
 
 updateMinimumDate();
+
+
+// --------------------------------------------------
+// Convert Unix timestamp to datetime-local value
+// --------------------------------------------------
+
+function timestampToInput(timestamp) {
+
+    const date =
+        new Date(timestamp * 1000);
+
+    const localDate =
+        new Date(
+            date.getTime() -
+            date.getTimezoneOffset() * 60000
+        );
+
+    return localDate
+        .toISOString()
+        .slice(0, 16);
+}
 
 
 // --------------------------------------------------
@@ -61,6 +91,17 @@ function formatDate(timestamp) {
 
 
 // --------------------------------------------------
+// Check if homework is overdue
+// --------------------------------------------------
+
+function isOverdue(timestamp) {
+
+    return Number(timestamp) <=
+        Math.floor(Date.now() / 1000);
+}
+
+
+// --------------------------------------------------
 // Load homework
 // --------------------------------------------------
 
@@ -71,14 +112,33 @@ async function loadHomework() {
 
     try {
 
-        const response = await fetch(
-            "/.netlify/functions/discord",
-            {
-                method: "GET"
-            }
-        );
+        const response =
+            await fetch(
+                "/.netlify/functions/discord",
+                {
+                    method: "GET"
+                }
+            );
 
-        const data = await response.json();
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            throw new Error(
+                `Server returned ${response.status} instead of JSON.`
+            );
+        }
+
 
         if (!response.ok) {
 
@@ -88,27 +148,38 @@ async function loadHomework() {
             );
         }
 
-        renderHomework(data.homework);
+
+        renderHomework(
+            data.homework
+        );
+
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Load error:",
+            error
+        );
+
 
         homeworkList.innerHTML =
             `<p class="empty">
-                Failed to load homework.
+                ${error.message}
             </p>`;
     }
 }
 
 
 // --------------------------------------------------
-// Render homework list
+// Render homework
 // --------------------------------------------------
 
 function renderHomework(homework) {
 
-    if (!homework || homework.length === 0) {
+    if (
+        !Array.isArray(homework) ||
+        homework.length === 0
+    ) {
 
         homeworkList.innerHTML =
             `<p class="empty">
@@ -124,40 +195,87 @@ function renderHomework(homework) {
 
     homework.forEach(item => {
 
+        const overdue =
+            isOverdue(item.timestamp);
+
+
         const element =
             document.createElement("div");
 
-        element.className = "homework-item";
 
+        element.className =
+            overdue
+                ? "homework-item overdue"
+                : "homework-item upcoming";
+
+
+        // ------------------------------------------
+        // Title
+        // ------------------------------------------
 
         const title =
             document.createElement("div");
 
-        title.className = "homework-title";
 
-        title.textContent = item.title;
+        title.className =
+            "homework-title";
 
+
+        title.textContent =
+            `${overdue ? "⚠️ " : ""}${item.title}`;
+
+
+        // ------------------------------------------
+        // Date
+        // ------------------------------------------
 
         const date =
             document.createElement("div");
 
-        date.className = "homework-date";
 
-        date.textContent =
-            `Due: ${formatDate(item.timestamp)}`;
+        date.className =
+            "homework-date";
 
+
+        if (overdue) {
+
+            date.innerHTML =
+                `<span class="overdue-label">
+                    Overdue
+                </span>
+                · ${formatDate(item.timestamp)}`;
+
+        } else {
+
+            date.textContent =
+                `Due: ${formatDate(item.timestamp)}`;
+        }
+
+
+        // ------------------------------------------
+        // Note
+        // ------------------------------------------
 
         const note =
             document.createElement("div");
 
-        note.className = "homework-note";
+
+        note.className =
+            "homework-note";
+
 
         note.textContent =
-            item.note || "No note";
+            item.note ||
+            "No note";
 
+
+        // ------------------------------------------
+        // Buttons
+        // ------------------------------------------
 
         const actions =
             document.createElement("div");
+
 
         actions.className =
             "homework-actions";
@@ -166,34 +284,47 @@ function renderHomework(homework) {
         const editButton =
             document.createElement("button");
 
-        editButton.type = "button";
 
-        editButton.textContent = "Edit";
+        editButton.type =
+            "button";
 
-        editButton.onclick = () => {
 
-            startEdit(item);
-        };
+        editButton.textContent =
+            "Edit";
+
+
+        editButton.onclick =
+            () => startEdit(item);
 
 
         const deleteButton =
             document.createElement("button");
 
-        deleteButton.type = "button";
 
-        deleteButton.textContent = "Delete";
-
-        deleteButton.className = "delete";
-
-        deleteButton.onclick = () => {
-
-            deleteHomework(item.id);
-        };
+        deleteButton.type =
+            "button";
 
 
-        actions.appendChild(editButton);
+        deleteButton.textContent =
+            "Delete";
 
-        actions.appendChild(deleteButton);
+
+        deleteButton.className =
+            "delete";
+
+
+        deleteButton.onclick =
+            () => deleteHomework(item.id);
+
+
+        actions.appendChild(
+            editButton
+        );
+
+
+        actions.appendChild(
+            deleteButton
+        );
 
 
         element.appendChild(title);
@@ -205,7 +336,9 @@ function renderHomework(homework) {
         element.appendChild(actions);
 
 
-        homeworkList.appendChild(element);
+        homeworkList.appendChild(
+            element
+        );
     });
 }
 
@@ -220,16 +353,45 @@ form.addEventListener(
 
         event.preventDefault();
 
+
         const title =
             titleInput.value.trim();
+
 
         const note =
             noteInput.value.trim();
 
+
         const dateInput =
             datetimeInput.value;
 
-        if (!title || !dateInput) {
+
+        const editId =
+            editIdInput.value;
+
+
+        if (
+            !title ||
+            !dateInput
+        ) {
+
+            return;
+        }
+
+
+        const selectedDate =
+            new Date(dateInput);
+
+
+        if (
+            isNaN(
+                selectedDate.getTime()
+            )
+        ) {
+
+            alert(
+                "Invalid date."
+            );
 
             return;
         }
@@ -237,13 +399,16 @@ form.addEventListener(
 
         const timestamp =
             Math.floor(
-                new Date(dateInput).getTime() / 1000
+                selectedDate.getTime() /
+                1000
             );
 
 
         if (
-            !Number.isFinite(timestamp) ||
-            timestamp <= Math.floor(Date.now() / 1000)
+            timestamp <=
+            Math.floor(
+                Date.now() / 1000
+            )
         ) {
 
             alert(
@@ -254,10 +419,6 @@ form.addEventListener(
         }
 
 
-        const editId =
-            editIdInput.value;
-
-
         const action =
             editId
                 ? "edit"
@@ -265,6 +426,12 @@ form.addEventListener(
 
 
         setLoading(true);
+
+
+        statusElement.textContent =
+            editId
+                ? "Updating..."
+                : "Posting...";
 
 
         try {
@@ -282,23 +449,48 @@ form.addEventListener(
 
                         body: JSON.stringify({
 
-                            action: action,
+                            action:
 
-                            id: editId || undefined,
+                                action,
 
-                            title: title,
+                            id:
 
-                            note: note,
+                                editId ||
+                                undefined,
+
+                            title:
+
+                                title,
+
+                            note:
+
+                                note,
 
                             timestamp:
+
                                 timestamp
                         })
                     }
                 );
 
 
-            const data =
-                await response.json();
+            const text =
+                await response.text();
+
+
+            let data;
+
+            try {
+
+                data =
+                    JSON.parse(text);
+
+            } catch {
+
+                throw new Error(
+                    `Server returned ${response.status} instead of JSON.`
+                );
+            }
 
 
             if (!response.ok) {
@@ -313,22 +505,32 @@ form.addEventListener(
             statusElement.textContent =
                 editId
                     ? "Homework updated!"
-                    : "Homework added!";
+                    : "Homework posted!";
 
 
             resetForm();
 
-            await loadHomework();
+
+            renderHomework(
+                data.homework
+            );
 
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Submit error:",
+                error
+            );
 
-            alert(error.message);
 
             statusElement.textContent =
                 "Operation failed.";
+
+
+            alert(
+                error.message
+            );
 
         } finally {
 
@@ -347,30 +549,19 @@ function startEdit(item) {
     editIdInput.value =
         item.id;
 
+
     titleInput.value =
         item.title;
+
 
     noteInput.value =
         item.note || "";
 
 
-    const date =
-        new Date(
-            item.timestamp * 1000
-        );
-
-
-    const local =
-        new Date(
-            date.getTime() -
-            date.getTimezoneOffset() * 60000
-        )
-            .toISOString()
-            .slice(0, 16);
-
-
     datetimeInput.value =
-        local;
+        timestampToInput(
+            item.timestamp
+        );
 
 
     submitButton.textContent =
@@ -381,8 +572,13 @@ function startEdit(item) {
         false;
 
 
+    updateMinimumDate();
+
+
     window.scrollTo({
+
         top: 0,
+
         behavior: "smooth"
     });
 }
@@ -402,12 +598,18 @@ function resetForm() {
 
     form.reset();
 
-    editIdInput.value = "";
+
+    editIdInput.value =
+        "";
+
 
     submitButton.textContent =
         "Post Homework";
 
-    cancelButton.hidden = true;
+
+    cancelButton.hidden =
+        true;
+
 
     updateMinimumDate();
 }
@@ -426,12 +628,15 @@ async function deleteHomework(id) {
 
 
     if (!confirmed) {
-
         return;
     }
 
 
     setLoading(true);
+
+
+    statusElement.textContent =
+        "Deleting...";
 
 
     try {
@@ -449,16 +654,33 @@ async function deleteHomework(id) {
 
                     body: JSON.stringify({
 
-                        action: "delete",
+                        action:
+                            "delete",
 
-                        id: id
+                        id:
+                            id
                     })
                 }
             );
 
 
-        const data =
-            await response.json();
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            throw new Error(
+                `Server returned ${response.status} instead of JSON.`
+            );
+        }
 
 
         if (!response.ok) {
@@ -474,15 +696,26 @@ async function deleteHomework(id) {
             "Homework deleted!";
 
 
-        await loadHomework();
+        renderHomework(
+            data.homework
+        );
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Delete error:",
+            error
+        );
 
-        alert(error.message);
 
+        statusElement.textContent =
+            "Delete failed.";
+
+
+        alert(
+            error.message
+        );
 
     } finally {
 

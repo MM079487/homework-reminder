@@ -1,10 +1,17 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 
-const store = getStore("homework");
-const DATA_KEY = "homework-data";
 
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const store =
+    getStore("homework");
+
+
+const DATA_KEY =
+    "homework-data";
+
+
+const WEBHOOK_URL =
+    process.env.DISCORD_WEBHOOK_URL;
 
 
 // --------------------------------------------------
@@ -12,12 +19,15 @@ const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 // --------------------------------------------------
 
 function json(data, status = 200) {
+
     return new Response(
         JSON.stringify(data),
         {
-            status,
+            status: status,
+
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type":
+                    "application/json"
             }
         }
     );
@@ -28,30 +38,39 @@ function json(data, status = 200) {
 // Load database
 // --------------------------------------------------
 
-async function loadDatabase() {
+async function loadData() {
 
-    const data = await store.get(
-        DATA_KEY,
-        {
-            type: "json",
-            consistency: "strong"
-        }
-    );
+    const data =
+        await store.get(
+            DATA_KEY,
+            {
+                type: "json",
+                consistency: "strong"
+            }
+        );
+
 
     if (!data) {
+
         return {
+
             homework: [],
+
             discordMessageId: null
         };
     }
 
+
     return {
-        homework: Array.isArray(data.homework)
-            ? data.homework
-            : [],
+
+        homework:
+            Array.isArray(data.homework)
+                ? data.homework
+                : [],
 
         discordMessageId:
-            data.discordMessageId || null
+            data.discordMessageId ||
+            null
     };
 }
 
@@ -60,7 +79,7 @@ async function loadDatabase() {
 // Save database
 // --------------------------------------------------
 
-async function saveDatabase(data) {
+async function saveData(data) {
 
     await store.setJSON(
         DATA_KEY,
@@ -70,7 +89,7 @@ async function saveDatabase(data) {
 
 
 // --------------------------------------------------
-// Sort homework by due date
+// Sort by due date
 // --------------------------------------------------
 
 function sortHomework(homework) {
@@ -84,47 +103,30 @@ function sortHomework(homework) {
 
 
 // --------------------------------------------------
-// Remove overdue homework
-// --------------------------------------------------
-
-function removeOverdueHomework(data) {
-
-    const now =
-        Math.floor(Date.now() / 1000);
-
-    const oldLength =
-        data.homework.length;
-
-    data.homework =
-        data.homework.filter(
-            item =>
-                Number(item.timestamp) > now
-        );
-
-    sortHomework(data.homework);
-
-    return data.homework.length !== oldLength;
-}
-
-
-// --------------------------------------------------
 // Build Discord embed
 // --------------------------------------------------
 
-function buildEmbed(homework) {
+function createEmbed(homework) {
 
-    if (homework.length === 0) {
+    if (
+        homework.length === 0
+    ) {
 
         return {
-            title: "📚 Homework Reminders",
+
+            title:
+                "📚 Homework Reminders",
 
             description:
                 "🎉 No homework currently!",
 
-            color: 0xED4245,
+            color:
+                0xFF0000,
 
             footer: {
-                text: "Total homework: 0"
+
+                text:
+                    "Total homework: 0"
             },
 
             timestamp:
@@ -133,24 +135,86 @@ function buildEmbed(homework) {
     }
 
 
-    let description = "";
+    let description =
+        "";
 
-    for (let i = 0; i < homework.length; i++) {
+
+    for (
+        let i = 0;
+        i < homework.length;
+        i++
+    ) {
 
         const item =
             homework[i];
 
-        let section =
-            `**${i + 1}. ${item.title}**\n` +
-            `> Due ` +
-            `<t:${item.timestamp}:F>` +
-            ` (<t:${item.timestamp}:R>)`;
 
-        if (item.note) {
+        const overdue =
+            Number(item.timestamp) <=
+            Math.floor(
+                Date.now() / 1000
+            );
+
+
+        let section =
+            "";
+
+
+        // ------------------------------------------
+        // Title
+        // ------------------------------------------
+
+        section +=
+            overdue
+                ? `⚠️ **${item.title}**\n`
+                : `**${item.title}**\n`;
+
+
+        // ------------------------------------------
+        // Due date
+        // ------------------------------------------
+
+        if (overdue) {
+
             section +=
-                `\n> ${item.note}`;
+                `> **Overdue** · ` +
+                `<t:${item.timestamp}:F> ` +
+                `(<t:${item.timestamp}:R>)`;
+
+        } else {
+
+            section +=
+                `> Due ` +
+                `<t:${item.timestamp}:F> ` +
+                `(<t:${item.timestamp}:R>)`;
         }
 
+
+        // ------------------------------------------
+        // Note
+        // ------------------------------------------
+
+        if (item.note) {
+
+            // Preserve line breaks
+            const noteLines =
+                item.note
+                    .split("\n")
+                    .map(
+                        line =>
+                            `> ${line}`
+                    )
+                    .join("\n");
+
+
+            section +=
+                `\n${noteLines}`;
+        }
+
+
+        // ------------------------------------------
+        // Add to description
+        // ------------------------------------------
 
         const addition =
             description
@@ -158,7 +222,8 @@ function buildEmbed(homework) {
                 : section;
 
 
-        // Discord embed description limit
+        // Discord embed description
+        // limit is 4096 characters.
         if (
             description.length +
             addition.length >
@@ -166,13 +231,14 @@ function buildEmbed(homework) {
         ) {
 
             description +=
-                "\n\n*Some homework is hidden because the list is too large for one Discord embed.*";
+                "\n\n*Some homework is not shown because the Discord embed is too large.*";
 
             break;
         }
 
 
-        description += addition;
+        description +=
+            addition;
     }
 
 
@@ -185,9 +251,10 @@ function buildEmbed(homework) {
             description,
 
         color:
-            0xED4245,
+            0xFF0000,
 
         footer: {
+
             text:
                 `Total homework: ${homework.length}`
         },
@@ -199,7 +266,7 @@ function buildEmbed(homework) {
 
 
 // --------------------------------------------------
-// Sync Discord message
+// Update Discord message
 // --------------------------------------------------
 
 async function syncDiscord(data) {
@@ -213,32 +280,111 @@ async function syncDiscord(data) {
 
 
     const embed =
-        buildEmbed(data.homework);
+        createEmbed(
+            data.homework
+        );
 
 
-    // ----------------------------------------------
-    // Update existing Discord message
-    // ----------------------------------------------
+    // ==============================================
+    // Existing Discord message
+    // ==============================================
 
-    if (data.discordMessageId) {
+    if (
+        data.discordMessageId
+    ) {
 
-        const editUrl =
+        const editURL =
             `${WEBHOOK_URL}/messages/` +
             `${data.discordMessageId}`;
 
 
         const response =
             await fetch(
-                editUrl,
+                editURL,
                 {
                     method: "PATCH",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
                     },
 
-                    body: JSON.stringify({
+                    body:
+                        JSON.stringify({
+
+                            username:
+                                "Homework Reminder",
+
+                            embeds:
+                                [embed],
+
+                            allowed_mentions: {
+
+                                parse: []
+                            }
+                        })
+                }
+            );
+
+
+        if (response.ok) {
+
+            return;
+        }
+
+
+        // Message was manually deleted
+        if (
+            response.status ===
+            404
+        ) {
+
+            data.discordMessageId =
+                null;
+
+        } else {
+
+            const errorText =
+                await response.text();
+
+
+            console.error(
+                "Discord PATCH error:",
+                errorText
+            );
+
+
+            throw new Error(
+                "Failed to update Discord."
+            );
+        }
+    }
+
+
+    // ==============================================
+    // Create new Discord message
+    // ==============================================
+
+    const createURL =
+        `${WEBHOOK_URL}?wait=true`;
+
+
+    const response =
+        await fetch(
+            createURL,
+            {
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
 
                         username:
                             "Homework Reminder",
@@ -247,70 +393,10 @@ async function syncDiscord(data) {
                             [embed],
 
                         allowed_mentions: {
+
                             parse: []
                         }
                     })
-                }
-            );
-
-
-        if (response.ok) {
-            return;
-        }
-
-
-        // Message was manually deleted
-        if (response.status !== 404) {
-
-            const errorText =
-                await response.text();
-
-            console.error(
-                "Discord edit error:",
-                errorText
-            );
-
-            throw new Error(
-                "Failed to update Discord."
-            );
-        }
-
-
-        data.discordMessageId = null;
-    }
-
-
-    // ----------------------------------------------
-    // Create new Discord message
-    // ----------------------------------------------
-
-    const createUrl =
-        `${WEBHOOK_URL}?wait=true`;
-
-
-    const response =
-        await fetch(
-            createUrl,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    username:
-                        "Homework Reminder",
-
-                    embeds:
-                        [embed],
-
-                    allowed_mentions: {
-                        parse: []
-                    }
-                })
             }
         );
 
@@ -320,10 +406,12 @@ async function syncDiscord(data) {
         const errorText =
             await response.text();
 
+
         console.error(
-            "Discord create error:",
+            "Discord POST error:",
             errorText
         );
+
 
         throw new Error(
             "Failed to create Discord message."
@@ -341,7 +429,7 @@ async function syncDiscord(data) {
 
 
 // --------------------------------------------------
-// Main function
+// Netlify Function
 // --------------------------------------------------
 
 export default async function (req) {
@@ -352,28 +440,25 @@ export default async function (req) {
         // GET
         // ==========================================
 
-        if (req.method === "GET") {
+        if (
+            req.method ===
+            "GET"
+        ) {
 
             const data =
-                await loadDatabase();
+                await loadData();
 
 
-            // Remove anything overdue
-            const changed =
-                removeOverdueHomework(data);
-
-
-            // Update Discord if something expired
-            if (changed) {
-
-                await syncDiscord(data);
-
-                await saveDatabase(data);
-            }
+            sortHomework(
+                data.homework
+            );
 
 
             return json({
-                success: true,
+
+                success:
+                    true,
+
                 homework:
                     data.homework
             });
@@ -384,136 +469,303 @@ export default async function (req) {
         // POST
         // ==========================================
 
-        if (req.method !== "POST") {
+        if (
+            req.method ===
+            "POST"
+        ) {
 
-            return json(
-                {
-                    error:
-                        "Method not allowed."
-                },
-                405
-            );
-        }
+            const body =
+                await req.json();
 
 
-        const body =
-            await req.json();
+            const action =
+                body.action;
 
 
-        const action =
-            body.action;
+            const data =
+                await loadData();
 
 
-        const data =
-            await loadDatabase();
-
-
-        // ------------------------------------------
-        // Clean old homework first
-        // ------------------------------------------
-
-        const hadExpiredHomework =
-            removeOverdueHomework(data);
-
-
-        if (hadExpiredHomework) {
-
-            await syncDiscord(data);
-
-            await saveDatabase(data);
-        }
-
-
-        // ==========================================
-        // ADD
-        // ==========================================
-
-        if (action === "add") {
-
-            const title =
-                body.title?.trim();
-
-            const note =
-                body.note?.trim() || "";
-
-            const timestamp =
-                Number(body.timestamp);
-
-
-            if (!title) {
-
-                return json(
-                    {
-                        error:
-                            "Title is required."
-                    },
-                    400
-                );
-            }
-
+            // --------------------------------------
+            // ADD
+            // --------------------------------------
 
             if (
-                !Number.isFinite(timestamp)
+                action ===
+                "add"
             ) {
+
+                const title =
+                    body.title?.trim();
+
+
+                const note =
+                    body.note?.trim() ||
+                    "";
+
+
+                const timestamp =
+                    Number(
+                        body.timestamp
+                    );
+
+
+                if (!title) {
+
+                    return json(
+                        {
+                            error:
+                                "Title is required."
+                        },
+                        400
+                    );
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        timestamp
+                    )
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Invalid timestamp."
+                        },
+                        400
+                    );
+                }
+
+
+                if (
+                    timestamp <=
+                    Math.floor(
+                        Date.now() /
+                        1000
+                    )
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Due date must be in the future."
+                        },
+                        400
+                    );
+                }
+
+
+                data.homework.push({
+
+                    id:
+                        crypto.randomUUID(),
+
+                    title:
+                        title,
+
+                    note:
+                        note,
+
+                    timestamp:
+                        timestamp,
+
+                    createdAt:
+                        new Date()
+                            .toISOString()
+                });
+            }
+
+
+            // --------------------------------------
+            // EDIT
+            // --------------------------------------
+
+            else if (
+                action ===
+                "edit"
+            ) {
+
+                const item =
+                    data.homework.find(
+                        homework =>
+                            homework.id ===
+                            body.id
+                    );
+
+
+                if (!item) {
+
+                    return json(
+                        {
+                            error:
+                                "Homework not found."
+                        },
+                        404
+                    );
+                }
+
+
+                const title =
+                    body.title?.trim();
+
+
+                const note =
+                    body.note?.trim() ||
+                    "";
+
+
+                const timestamp =
+                    Number(
+                        body.timestamp
+                    );
+
+
+                if (!title) {
+
+                    return json(
+                        {
+                            error:
+                                "Title is required."
+                        },
+                        400
+                    );
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        timestamp
+                    )
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Invalid timestamp."
+                        },
+                        400
+                    );
+                }
+
+
+                if (
+                    timestamp <=
+                    Math.floor(
+                        Date.now() /
+                        1000
+                    )
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Due date must be in the future."
+                        },
+                        400
+                    );
+                }
+
+
+                item.title =
+                    title;
+
+
+                item.note =
+                    note;
+
+
+                item.timestamp =
+                    timestamp;
+
+
+                item.updatedAt =
+                    new Date()
+                        .toISOString();
+            }
+
+
+            // --------------------------------------
+            // DELETE
+            // --------------------------------------
+
+            else if (
+                action ===
+                "delete"
+            ) {
+
+                const before =
+                    data.homework.length;
+
+
+                data.homework =
+                    data.homework.filter(
+                        item =>
+                            item.id !==
+                            body.id
+                    );
+
+
+                if (
+                    data.homework.length ===
+                    before
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Homework not found."
+                        },
+                        404
+                    );
+                }
+            }
+
+
+            else {
 
                 return json(
                     {
                         error:
-                            "Invalid date."
+                            "Invalid action."
                     },
                     400
                 );
             }
 
 
-            if (
-                timestamp <=
-                Math.floor(
-                    Date.now() / 1000
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Due date must be in the future."
-                    },
-                    400
-                );
-            }
-
-
-            data.homework.push({
-
-                id:
-                    crypto.randomUUID(),
-
-                title:
-                    title,
-
-                note:
-                    note,
-
-                timestamp:
-                    timestamp,
-
-                createdAt:
-                    new Date().toISOString()
-            });
-
+            // --------------------------------------
+            // Sort
+            // --------------------------------------
 
             sortHomework(
                 data.homework
             );
 
 
-            await syncDiscord(data);
+            // --------------------------------------
+            // Update Discord
+            // --------------------------------------
 
-            await saveDatabase(data);
+            await syncDiscord(
+                data
+            );
+
+
+            // --------------------------------------
+            // Save JSON
+            // --------------------------------------
+
+            await saveData(
+                data
+            );
 
 
             return json({
-                success: true,
+
+                success:
+                    true,
+
                 homework:
                     data.homework
             });
@@ -521,201 +773,15 @@ export default async function (req) {
 
 
         // ==========================================
-        // EDIT
+        // Other HTTP methods
         // ==========================================
-
-        if (action === "edit") {
-
-            const id =
-                body.id;
-
-            const title =
-                body.title?.trim();
-
-            const note =
-                body.note?.trim() || "";
-
-            const timestamp =
-                Number(body.timestamp);
-
-
-            if (!id) {
-
-                return json(
-                    {
-                        error:
-                            "Homework ID is required."
-                    },
-                    400
-                );
-            }
-
-
-            if (!title) {
-
-                return json(
-                    {
-                        error:
-                            "Title is required."
-                    },
-                    400
-                );
-            }
-
-
-            if (
-                !Number.isFinite(timestamp)
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid date."
-                    },
-                    400
-                );
-            }
-
-
-            if (
-                timestamp <=
-                Math.floor(
-                    Date.now() / 1000
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Due date must be in the future."
-                    },
-                    400
-                );
-            }
-
-
-            const item =
-                data.homework.find(
-                    homework =>
-                        homework.id === id
-                );
-
-
-            if (!item) {
-
-                return json(
-                    {
-                        error:
-                            "Homework not found."
-                    },
-                    404
-                );
-            }
-
-
-            item.title =
-                title;
-
-            item.note =
-                note;
-
-            item.timestamp =
-                timestamp;
-
-            item.updatedAt =
-                new Date().toISOString();
-
-
-            sortHomework(
-                data.homework
-            );
-
-
-            await syncDiscord(data);
-
-            await saveDatabase(data);
-
-
-            return json({
-                success: true,
-                homework:
-                    data.homework
-            });
-        }
-
-
-        // ==========================================
-        // DELETE
-        // ==========================================
-
-        if (action === "delete") {
-
-            const id =
-                body.id;
-
-
-            if (!id) {
-
-                return json(
-                    {
-                        error:
-                            "Homework ID is required."
-                    },
-                    400
-                );
-            }
-
-
-            const originalLength =
-                data.homework.length;
-
-
-            data.homework =
-                data.homework.filter(
-                    item =>
-                        item.id !== id
-                );
-
-
-            if (
-                data.homework.length ===
-                originalLength
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Homework not found."
-                    },
-                    404
-                );
-            }
-
-
-            sortHomework(
-                data.homework
-            );
-
-
-            await syncDiscord(data);
-
-            await saveDatabase(data);
-
-
-            return json({
-                success: true,
-                homework:
-                    data.homework
-            });
-        }
-
 
         return json(
             {
                 error:
-                    "Unknown action."
+                    "Method not allowed."
             },
-            400
+            405
         );
 
 
