@@ -1,6 +1,5 @@
 * {
-    margin: 0;
-    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
@@ -9,135 +8,245 @@ body {
 
     display: flex;
     justify-content: center;
-    align-items: center;
+
+    padding: 40px 20px;
 
     background: #0f1117;
+
+    color: #ffffff;
+
     font-family: Arial, sans-serif;
-    color: #fff;
 }
 
 .container {
-    width: 350px;
-    padding: 30px;
+    width: 100%;
+    max-width: 600px;
 
     background: #181b24;
+
     border: 1px solid #292d3a;
+
     border-radius: 16px;
 
-    /* Floating card effect */
+    padding: 30px;
+
     box-shadow:
         0 15px 35px rgba(0, 0, 0, 0.45),
         0 5px 15px rgba(0, 0, 0, 0.25);
-
-    transition: all 0.25s ease;
 }
 
-.container:hover {
+h1 {
+    margin-top: 0;
+    margin-bottom: 30px;
 
-    box-shadow:
-        0 20px 45px rgba(31, 31, 31, 0.55),
-        0 0 20px rgba(88, 101, 242, 0.08);
+    text-align: center;
 }
 
-.container p {
-    margin: 0 0 8px;
+p {
+    margin-bottom: 8px;
 
     color: #e5e7eb;
+
     font-weight: 600;
 }
 
-.container input {
+input,
+textarea {
     width: 100%;
-    box-sizing: border-box;
 
     padding: 12px 14px;
-    margin-bottom: 20px;
+
+    margin-bottom: 18px;
 
     background: #10131a;
-    color: #fff;
+
+    color: #ffffff;
 
     border: 1px solid #303542;
+
     border-radius: 8px;
 
     font-size: 15px;
+
     outline: none;
 
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
 
-.container input::placeholder {
+textarea {
+    min-height: 100px;
+
+    resize: vertical;
+
+    font-family: Arial, sans-serif;
+}
+
+input::placeholder,
+textarea::placeholder {
     color: #6b7280;
 }
 
-.container input:focus {
+input:focus,
+textarea:focus {
     border-color: #5865f2;
 
     box-shadow:
         0 0 0 3px rgba(88, 101, 242, 0.15);
 }
 
-#dt {
+input[type="datetime-local"] {
     color-scheme: dark;
 }
 
-.container button {
-    width: 100%;
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+
+    opacity: 0.9;
+
+    cursor: pointer;
+}
+
+.button-row {
+    display: flex;
+
+    gap: 10px;
+}
+
+button {
+    flex: 1;
+
     padding: 12px;
 
-    margin-top: 5px;
-
-    background: #5865f2;
-    color: white;
-
     border: none;
+
     border-radius: 8px;
 
+    background: #5865f2;
+
+    color: #ffffff;
+
     font-size: 15px;
+
     font-weight: 600;
 
     cursor: pointer;
 
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
 
-.container button:hover {
+button:hover {
     background: #4752c4;
+
     transform: translateY(-2px);
 
-    box-shadow: 0 5px 15px rgba(88, 101, 242, 0.3);
+    box-shadow:
+        0 5px 15px rgba(88, 101, 242, 0.3);
 }
 
-.container button:active {
+button:active {
     transform: translateY(0);
 }
 
-#note {
-    width: 100%;
-    height: 100px;
-    box-sizing: border-box;
-
-    padding: 12px 14px;
-
-    background: #10131a;
-    color: white;
-
-    border: 1px solid #303542;
-    border-radius: 8px;
-
-    font-family: Arial, sans-serif;
-    font-size: 15px;
-
-    resize: vertical;
-    outline: none;
-
-    transition: all 0.2s ease;
+button.secondary {
+    background: #303542;
 }
 
-#note::placeholder {
+button.secondary:hover {
+    background: #3b4050;
+}
+
+button.delete {
+    background: #ed4245;
+}
+
+button.delete:hover {
+    background: #c73537;
+}
+
+.refresh-button {
+    flex: 0 0 auto;
+
+    padding: 8px 14px;
+}
+
+.section-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-top: 35px;
+}
+
+.section-header h2 {
+    margin: 0;
+}
+
+.homework-item {
+    margin-top: 15px;
+
+    padding: 18px;
+
+    background: #10131a;
+
+    border: 1px solid #292d3a;
+
+    border-radius: 10px;
+}
+
+.homework-title {
+    margin: 0 0 8px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+}
+
+.homework-date {
+    margin-bottom: 8px;
+
+    color: #9ca3af;
+
+    font-size: 14px;
+}
+
+.homework-note {
+    margin-bottom: 15px;
+
+    color: #d1d5db;
+
+    white-space: pre-wrap;
+
+    word-break: break-word;
+}
+
+.homework-actions {
+    display: flex;
+
+    gap: 8px;
+}
+
+.homework-actions button {
+    flex: 1;
+
+    padding: 9px;
+
+    font-size: 14px;
+}
+
+.empty {
+    margin-top: 20px;
+
+    text-align: center;
+
     color: #6b7280;
 }
 
-#note:focus {
-    border-color: #5865f2;
-    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.15);
+#status {
+    margin-top: 15px;
+
+    text-align: center;
+
+    color: #9ca3af;
 }

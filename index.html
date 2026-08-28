@@ -3,27 +3,107 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homework Poster</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Homework Manager</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <form onsubmit="sendWebhook(event)">
-        <div class="container">
+
+    <main class="container">
+
+        <h1>Homework Manager</h1>
+
+        <form id="homeworkForm">
+
+            <input
+                type="hidden"
+                id="editId"
+            >
+
             <p>Title:</p>
-            <input id="title" type="text" placeholder="Title" required>
+
+            <input
+                id="title"
+                type="text"
+                placeholder="Homework title"
+                maxlength="256"
+                required
+            >
 
             <p>Note (optional):</p>
-            <textarea id="note" placeholder="Write a note..."></textarea>
+
+            <textarea
+                id="note"
+                placeholder="Write a note..."
+                maxlength="1000"
+            ></textarea>
 
             <p>Date:</p>
-            <input type="datetime-local" name="datetime" id="dt" required>
 
-            <button type="submit">Post</button>
-        </div>
-    </form>
+            <input
+                type="datetime-local"
+                id="dt"
+                required
+            >
+
+            <div class="button-row">
+
+                <button
+                    type="submit"
+                    id="submitButton"
+                >
+                    Post Homework
+                </button>
+
+                <button
+                    type="button"
+                    id="cancelButton"
+                    class="secondary"
+                    hidden
+                >
+                    Cancel Edit
+                </button>
+
+            </div>
+
+        </form>
+
+        <div id="status"></div>
+
+        <section class="homework-section">
+
+            <div class="section-header">
+
+                <h2>Homework List</h2>
+
+                <button
+                    type="button"
+                    id="refreshButton"
+                    class="refresh-button"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+            <div id="homeworkList">
+                <p class="empty">
+                    Loading...
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
     <script src="script.js"></script>
+
 </body>
 
 </html>
