@@ -485,6 +485,33 @@ export default async function (req) {
             const data =
                 await loadData();
 
+            // --------------------------------------
+            // REFRESH DISCORD
+            // --------------------------------------
+
+            if (action === "refresh") {
+
+                sortHomework(
+                    data.homework
+                );
+
+                await syncDiscord(
+                    data
+                );
+
+                await saveData(
+                    data
+                );
+
+                return json({
+
+                    success: true,
+
+                    homework:
+                        data.homework
+                });
+            }
+
 
             // --------------------------------------
             // ADD
