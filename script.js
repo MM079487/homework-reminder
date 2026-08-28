@@ -723,6 +723,96 @@ async function deleteHomework(id) {
     }
 }
 
+// ----------------
+// Refresh Homework
+// ----------------
+async function refreshHomework() {
+
+    setLoading(true);
+
+    statusElement.textContent =
+        "Refreshing...";
+
+    try {
+
+        const response =
+            await fetch(
+                "/.netlify/functions/discord",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        action: "refresh"
+                    })
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            throw new Error(
+                `Server returned ${response.status} instead of JSON.`
+            );
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "Failed to refresh."
+            );
+        }
+
+
+        renderHomework(
+            data.homework
+        );
+
+
+        statusElement.textContent =
+            "Refreshed!";
+
+
+    } catch (error) {
+
+        console.error(
+            "Refresh error:",
+            error
+        );
+
+
+        statusElement.textContent =
+            "Refresh failed.";
+
+
+        alert(
+            error.message
+        );
+
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
 
 // --------------------------------------------------
 // Refresh
@@ -730,7 +820,7 @@ async function deleteHomework(id) {
 
 refreshButton.addEventListener(
     "click",
-    loadHomework
+    refreshHomework
 );
 
 
