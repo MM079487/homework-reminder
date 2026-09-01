@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Homework List</title>
+
+    <link rel="stylesheet" href="viewer.css">
+</head>
+
+<body>
+
+    <main class="viewer-container">
+
+        <header class="header">
+
+            <div>
+                <h1>📚 Homework</h1>
+                <p class="subtitle">
+                    Upcoming and overdue homework
+                </p>
+            </div>
+
+            <button
+                type="button"
+                id="refreshButton"
+            >
+                ↻ Refresh
+            </button>
+
+        </header>
+
+
+        <div id="status"></div>
+
+
+        <section id="homeworkList">
+
+            <div class="loading">
+                Loading homework...
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="viewer.js"></script>
+
+</body>
+
+</html>
