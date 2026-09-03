@@ -38,16 +38,43 @@ function json(data, status = 200) {
 // Load database
 // --------------------------------------------------
 
+async function retry(operation, attempts = 3) {
+    let lastError;
+
+    for (let i = 0; i < attempts; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            lastError = error;
+
+            console.error(
+                `Attempt ${i + 1} failed:`,
+                error
+            );
+
+            if (i < attempts - 1) {
+                await new Promise(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            1000 * (i + 1)
+                        )
+                );
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 async function loadData() {
 
-    const data =
-        await store.get(
-            DATA_KEY,
-            {
-                type: "json",
-                consistency: "strong"
-            }
-        );
+    const data = await retry(() =>
+        store.get(DATA_KEY, {
+            type: "json",
+            consistency: "strong"
+        })
+    );
 
 
     if (!data) {
@@ -81,9 +108,8 @@ async function loadData() {
 
 async function saveData(data) {
 
-    await store.setJSON(
-        DATA_KEY,
-        data
+    await retry(() =>
+        store.setJSON("homework-data", data)
     );
 }
 
