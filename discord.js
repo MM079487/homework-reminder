@@ -11,10 +11,13 @@ const WEBHOOK_URL =
 
 
 // --------------------------------------------------
-// JSON response helper
+// Response helper
 // --------------------------------------------------
 
-function json(data, status = 200) {
+function json(
+    data,
+    status = 200
+) {
 
     return new Response(
         JSON.stringify(data),
@@ -31,55 +34,94 @@ function json(data, status = 200) {
 
 
 // --------------------------------------------------
-// Load database
+// Retry helper
 // --------------------------------------------------
 
-async function retry(operation, attempts = 3) {
+async function withRetry(
+    operation,
+    attempts = 3
+) {
+
     let lastError;
 
-    for (let i = 0; i < attempts; i++) {
+
+    for (
+        let attempt = 1;
+        attempt <= attempts;
+        attempt++
+    ) {
+
         try {
+
             return await operation();
+
         } catch (error) {
-            lastError = error;
+
+            lastError =
+                error;
+
 
             console.error(
-                `Attempt ${i + 1} failed:`,
+                `Attempt ${attempt}/${attempts} failed:`,
                 error
             );
 
-            if (i < attempts - 1) {
+
+            if (
+                attempt <
+                attempts
+            ) {
+
                 await new Promise(
                     resolve =>
                         setTimeout(
                             resolve,
-                            1000 * (i + 1)
+                            attempt * 1000
                         )
                 );
             }
         }
     }
 
+
     throw lastError;
 }
 
-async function loadData() {
 
-    const data = await retry(() =>
-        store.get(DATA_KEY, {
-            type: "json",
-            consistency: "strong"
-        })
-    );
+// --------------------------------------------------
+// Load data
+// --------------------------------------------------
+
+async function loadData(
+    store
+) {
+
+    const data =
+        await withRetry(
+            () =>
+                store.get(
+                    DATA_KEY,
+                    {
+                        type: "json",
+                        consistency:
+                            "strong"
+                    }
+                )
+        );
 
 
-    if (!data) {
+    if (
+        !data ||
+        typeof data !==
+            "object"
+    ) {
 
         return {
 
             homework: [],
 
-            discordMessageId: null
+            discordMessageId:
+                null
         };
     }
 
@@ -87,7 +129,9 @@ async function loadData() {
     return {
 
         homework:
-            Array.isArray(data.homework)
+            Array.isArray(
+                data.homework
+            )
                 ? data.homework
                 : [],
 
@@ -99,39 +143,55 @@ async function loadData() {
 
 
 // --------------------------------------------------
-// Save database
+// Save data
 // --------------------------------------------------
 
-async function saveData(data) {
+async function saveData(
+    store,
+    data
+) {
 
-    await retry(() =>
-        store.setJSON("homework-data", data)
+    await withRetry(
+        () =>
+            store.setJSON(
+                DATA_KEY,
+                data
+            )
     );
 }
 
 
 // --------------------------------------------------
-// Sort by due date
+// Sort
 // --------------------------------------------------
 
-function sortHomework(homework) {
+function sortHomework(
+    homework
+) {
 
     homework.sort(
         (a, b) =>
-            Number(a.timestamp) -
-            Number(b.timestamp)
+            Number(
+                a.timestamp
+            ) -
+            Number(
+                b.timestamp
+            )
     );
 }
 
 
 // --------------------------------------------------
-// Build Discord embed
+// Create Discord embed
 // --------------------------------------------------
 
-function createEmbed(homework) {
+function createEmbed(
+    homework
+) {
 
     if (
-        homework.length === 0
+        homework.length ===
+        0
     ) {
 
         return {
@@ -152,7 +212,8 @@ function createEmbed(homework) {
             },
 
             timestamp:
-                new Date().toISOString()
+                new Date()
+                    .toISOString()
         };
     }
 
@@ -172,29 +233,19 @@ function createEmbed(homework) {
 
 
         const overdue =
-            Number(item.timestamp) <=
+            Number(
+                item.timestamp
+            ) <=
             Math.floor(
                 Date.now() / 1000
             );
 
 
         let section =
-            "";
-
-
-        // ------------------------------------------
-        // Title
-        // ------------------------------------------
-
-        section +=
             overdue
                 ? `⚠️ **${item.title}**\n`
                 : `**${item.title}**\n`;
 
-
-        // ------------------------------------------
-        // Due date
-        // ------------------------------------------
 
         if (overdue) {
 
@@ -212,15 +263,10 @@ function createEmbed(homework) {
         }
 
 
-        // ------------------------------------------
-        // Note
-        // ------------------------------------------
-
         if (item.note) {
 
-            // Preserve line breaks
             const noteLines =
-                item.note
+                String(item.note)
                     .split("\n")
                     .map(
                         line =>
@@ -234,18 +280,12 @@ function createEmbed(homework) {
         }
 
 
-        // ------------------------------------------
-        // Add to description
-        // ------------------------------------------
-
         const addition =
             description
                 ? `\n\n${section}`
                 : section;
 
 
-        // Discord embed description
-        // limit is 4096 characters.
         if (
             description.length +
             addition.length >
@@ -253,7 +293,7 @@ function createEmbed(homework) {
         ) {
 
             description +=
-                "\n\n*Some homework is not shown because the Discord embed is too large.*";
+                "\n\n*Some homework is not shown because the list is too large for one Discord embed.*";
 
             break;
         }
@@ -282,16 +322,19 @@ function createEmbed(homework) {
         },
 
         timestamp:
-            new Date().toISOString()
+            new Date()
+                .toISOString()
     };
 }
 
 
 // --------------------------------------------------
-// Update Discord message
+// Sync Discord
 // --------------------------------------------------
 
-async function syncDiscord(data) {
+async function syncDiscord(
+    data
+) {
 
     if (!WEBHOOK_URL) {
 
@@ -307,9 +350,9 @@ async function syncDiscord(data) {
         );
 
 
-    // ==============================================
-    // Existing Discord message
-    // ==============================================
+    // ----------------------------------------------
+    // Update existing message
+    // ----------------------------------------------
 
     if (
         data.discordMessageId
@@ -324,7 +367,8 @@ async function syncDiscord(data) {
             await fetch(
                 editURL,
                 {
-                    method: "PATCH",
+                    method:
+                        "PATCH",
 
                     headers: {
 
@@ -343,20 +387,23 @@ async function syncDiscord(data) {
 
                             allowed_mentions: {
 
-                                parse: []
+                                parse:
+                                    []
                             }
                         })
                 }
             );
 
 
-        if (response.ok) {
+        if (
+            response.ok
+        ) {
 
             return;
         }
 
 
-        // Message was manually deleted
+        // Message was deleted manually
         if (
             response.status ===
             404
@@ -384,9 +431,9 @@ async function syncDiscord(data) {
     }
 
 
-    // ==============================================
-    // Create new Discord message
-    // ==============================================
+    // ----------------------------------------------
+    // Create Discord message
+    // ----------------------------------------------
 
     const createURL =
         `${WEBHOOK_URL}?wait=true`;
@@ -416,14 +463,17 @@ async function syncDiscord(data) {
 
                         allowed_mentions: {
 
-                            parse: []
+                            parse:
+                                []
                         }
                     })
             }
         );
 
 
-    if (!response.ok) {
+    if (
+        !response.ok
+    ) {
 
         const errorText =
             await response.text();
@@ -451,12 +501,28 @@ async function syncDiscord(data) {
 
 
 // --------------------------------------------------
-// Netlify Function
+// Main Netlify Function
 // --------------------------------------------------
 
-export default async function (req) {
+export default async function (
+    req
+) {
 
-    const store = getStore("homework");
+    /*
+     * IMPORTANT:
+     *
+     * Create the Blobs store INSIDE every
+     * Function invocation.
+     *
+     * This avoids keeping one store/client
+     * object around between warm invocations.
+     */
+
+    const store =
+        getStore(
+            "homework"
+        );
+
 
     try {
 
@@ -470,7 +536,9 @@ export default async function (req) {
         ) {
 
             const data =
-                await loadData();
+                await loadData(
+                    store
+                );
 
 
             sortHomework(
@@ -507,29 +575,40 @@ export default async function (req) {
 
 
             const data =
-                await loadData();
+                await loadData(
+                    store
+                );
 
-            // --------------------------------------
-            // REFRESH DISCORD
-            // --------------------------------------
 
-            if (action === "refresh") {
+            // ======================================
+            // REFRESH
+            // ======================================
+
+            if (
+                action ===
+                "refresh"
+            ) {
 
                 sortHomework(
                     data.homework
                 );
 
+
                 await syncDiscord(
                     data
                 );
 
+
                 await saveData(
+                    store,
                     data
                 );
 
+
                 return json({
 
-                    success: true,
+                    success:
+                        true,
 
                     homework:
                         data.homework
@@ -537,9 +616,9 @@ export default async function (req) {
             }
 
 
-            // --------------------------------------
+            // ======================================
             // ADD
-            // --------------------------------------
+            // ======================================
 
             if (
                 action ===
@@ -561,7 +640,9 @@ export default async function (req) {
                     );
 
 
-                if (!title) {
+                if (
+                    !title
+                ) {
 
                     return json(
                         {
@@ -628,9 +709,9 @@ export default async function (req) {
             }
 
 
-            // --------------------------------------
+            // ======================================
             // EDIT
-            // --------------------------------------
+            // ======================================
 
             else if (
                 action ===
@@ -645,7 +726,9 @@ export default async function (req) {
                     );
 
 
-                if (!item) {
+                if (
+                    !item
+                ) {
 
                     return json(
                         {
@@ -672,7 +755,9 @@ export default async function (req) {
                     );
 
 
-                if (!title) {
+                if (
+                    !title
+                ) {
 
                     return json(
                         {
@@ -736,9 +821,9 @@ export default async function (req) {
             }
 
 
-            // --------------------------------------
+            // ======================================
             // DELETE
-            // --------------------------------------
+            // ======================================
 
             else if (
                 action ===
@@ -785,29 +870,30 @@ export default async function (req) {
             }
 
 
-            // --------------------------------------
+            // ======================================
             // Sort
-            // --------------------------------------
+            // ======================================
 
             sortHomework(
                 data.homework
             );
 
 
-            // --------------------------------------
+            // ======================================
             // Update Discord
-            // --------------------------------------
+            // ======================================
 
             await syncDiscord(
                 data
             );
 
 
-            // --------------------------------------
+            // ======================================
             // Save JSON
-            // --------------------------------------
+            // ======================================
 
             await saveData(
+                store,
                 data
             );
 
@@ -822,10 +908,6 @@ export default async function (req) {
             });
         }
 
-
-        // ==========================================
-        // Other HTTP methods
-        // ==========================================
 
         return json(
             {
